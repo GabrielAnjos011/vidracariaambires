@@ -117,7 +117,7 @@ const PDFGenerator = () => {
     // Adicionar os dados fixos na coluna esquerda
     doc.setTextColor(0);
     doc.text(`Nome: Daniel Ambires da Silva`, 20, 50);
-    doc.text(`CNPJ: 43.244.454/0001-10`, 20, 60);
+    doc.text(`CNPJ: 68.536.892/0001-83`, 20, 60);
     doc.text(`Telefone: (11) 94705-8537`, 20, 70);
 
     if (customerData.name || customerData.cnpj || customerData.phone) {
