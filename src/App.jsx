@@ -175,10 +175,19 @@ const PDFGenerator = () => {
 
     // Rodapé
     const startYFooter = Math.max(doc.autoTable.previous.finalY + 20);
+    let totalAmountY = startYFooter + 15;
+
     if (observations) {
-      doc.text(`Observações: ${observations}`, 20, startYFooter);
+      const observationLines = doc.splitTextToSize(
+        `Observações: ${observations}`,
+        170
+      );
+      doc.text(observationLines, 20, startYFooter);
+
+      const lineHeight = doc.getLineHeight() / doc.internal.scaleFactor;
+      totalAmountY = startYFooter + observationLines.length * lineHeight + 8;
     }
-    doc.text(`Valor Total: ${totalAmount}`, 20, startYFooter + 15);
+    doc.text(`Valor Total: ${totalAmount}`, 20, totalAmountY);
 
     doc.save(`orcamento${currentDate}.pdf`);
   };
