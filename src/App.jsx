@@ -284,6 +284,220 @@ const PDFGenerator = () => {
     doc.save(`orcamento${currentDate}.pdf`);
   };
 
+  const generateModernPDF = () => {
+    const doc = new jsPDF();
+    const currentDate = date;
+    const [year, month, day] = currentDate.split("-");
+    const formattedDate = `${day}/${month}/${year}`;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 16;
+    const contentWidth = pageWidth - margin * 2;
+    const primaryColor = [0, 123, 175];
+    const darkColor = [20, 50, 70];
+    const mutedColor = [100, 124, 138];
+
+    doc.setFillColor(...darkColor);
+    doc.rect(0, 0, pageWidth, 44, "F");
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 40, pageWidth, 4, "F");
+
+    doc.setTextColor(130, 220, 244);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("VIDRAÇARIA AMBIRES", margin, 11);
+    doc.setTextColor(255);
+    doc.setFontSize(25);
+    doc.text("Orçamento", margin, 25);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(
+      "Daniel Ambires da Silva | CNPJ 68.536.892/0001-83 | (11) 94705-8537",
+      margin,
+      34
+    );
+    doc.setTextColor(210, 239, 248);
+    doc.setFontSize(8);
+    doc.text("DATA DE EMISSÃO", pageWidth - margin, 13, { align: "right" });
+    doc.setTextColor(255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text(formattedDate, pageWidth - margin, 22, { align: "right" });
+
+    const customerCardY = 56;
+    const customerName = customerData.name || "Cliente não informado";
+    const customerNameLines = doc.splitTextToSize(customerName, contentWidth - 14);
+    const customerDetailsY = customerCardY + 20 + customerNameLines.length * 5;
+    const customerCardHeight = customerDetailsY - customerCardY + 9;
+
+    doc.setFillColor(245, 249, 251);
+    doc.setDrawColor(221, 233, 238);
+    doc.roundedRect(
+      margin,
+      customerCardY,
+      contentWidth,
+      customerCardHeight,
+      3,
+      3,
+      "FD"
+    );
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("CLIENTE", margin + 7, customerCardY + 9);
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(14);
+    doc.text(customerNameLines, margin + 7, customerCardY + 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...mutedColor);
+    doc.text(
+      `CNPJ/CPF: ${customerData.cnpj ? formatCnpjCpf(customerData.cnpj) : "Não informado"}`,
+      margin + 7,
+      customerDetailsY
+    );
+    doc.text(
+      `Telefone: ${customerData.phone ? formatPhone(customerData.phone) : "Não informado"}`,
+      margin + contentWidth / 2,
+      customerDetailsY
+    );
+
+    const tableTitleY = customerCardY + customerCardHeight + 16;
+    doc.setTextColor(...darkColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Itens do orçamento", margin, tableTitleY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...mutedColor);
+    doc.setFontSize(8);
+    doc.text("Descrição dos produtos e serviços", margin, tableTitleY + 5);
+
+    const tableData = items.length
+      ? items.map((item) => [item.description, item.quantity, item.color])
+      : [["Nenhum item informado", "-", "-"]];
+
+    doc.autoTable({
+      startY: tableTitleY + 10,
+      head: [["Descrição", "Quantidade", "Cor"]],
+      body: tableData,
+      theme: "plain",
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: darkColor,
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 9,
+        cellPadding: 4,
+      },
+      bodyStyles: {
+        textColor: darkColor,
+        fontSize: 9,
+        cellPadding: 4,
+        lineColor: [222, 232, 237],
+        lineWidth: 0.2,
+      },
+      alternateRowStyles: { fillColor: [247, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: 108 },
+        1: { cellWidth: 32, halign: "center" },
+        2: { cellWidth: 38 },
+      },
+    });
+
+    let footerY = doc.autoTable.previous.finalY + 12;
+    const observationLines = doc.splitTextToSize(
+      observations || "Sem observações.",
+      98
+    );
+    const footerHeight = Math.max(31, 15 + observationLines.length * 4.5);
+
+    if (footerY + footerHeight > pageHeight - 16) {
+      doc.addPage();
+      footerY = 20;
+    }
+
+    doc.setFillColor(247, 250, 252);
+    doc.setDrawColor(221, 233, 238);
+    doc.roundedRect(margin, footerY, 112, footerHeight, 3, 3, "FD");
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("OBSERVAÇÕES", margin + 6, footerY + 9);
+    doc.setTextColor(...darkColor);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(observationLines, margin + 6, footerY + 16);
+
+    const totalCardX = margin + 118;
+    const totalCardWidth = contentWidth - 118;
+    doc.setFillColor(...primaryColor);
+    doc.roundedRect(
+      totalCardX,
+      footerY,
+      totalCardWidth,
+      footerHeight,
+      3,
+      3,
+      "F"
+    );
+    doc.setTextColor(213, 244, 252);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text("VALOR TOTAL", totalCardX + 6, footerY + 9);
+    doc.setTextColor(255);
+    doc.setFontSize(15);
+    const totalLines = doc.splitTextToSize(totalAmount || "A combinar", totalCardWidth - 12);
+    doc.text(totalLines, totalCardX + 6, footerY + 20);
+
+    if (includePaymentDetails) {
+      let paymentY = footerY + footerHeight + 8;
+      const paymentHeight = 47;
+
+      if (paymentY + paymentHeight > pageHeight - 16) {
+        doc.addPage();
+        paymentY = 20;
+      }
+
+      doc.setFillColor(238, 249, 253);
+      doc.setDrawColor(181, 220, 235);
+      doc.roundedRect(
+        margin,
+        paymentY,
+        contentWidth,
+        paymentHeight,
+        3,
+        3,
+        "FD"
+      );
+      doc.setFillColor(...primaryColor);
+      doc.roundedRect(margin, paymentY, 4, paymentHeight, 2, 2, "F");
+      doc.setTextColor(...primaryColor);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text("FORMAS DE PAGAMENTO", margin + 9, paymentY + 9);
+      doc.setTextColor(...darkColor);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.text(
+        "Titular: Vidraçaria Ambires | CNPJ: 68.536.892/0001-83",
+        margin + 9,
+        paymentY + 17
+      );
+      doc.text(
+        "Banco: Cora Scfi 403 | Agência: 0001 | Conta: 7685143-6",
+        margin + 9,
+        paymentY + 26
+      );
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...primaryColor);
+      doc.text("PIX", margin + 9, paymentY + 37);
+      doc.setTextColor(...darkColor);
+      doc.text("Chave Pix (CNPJ): 68536892000183", margin + 21, paymentY + 37);
+    }
+
+    doc.save(`orcamento-moderno${currentDate}.pdf`);
+  };
+
   const editItem = (index) => {
     const selectedItem = items[index];
     setItemDescription(selectedItem.description);
@@ -552,10 +766,16 @@ const PDFGenerator = () => {
           </div>
         </section>
 
-        <button className="button generate-pdf" onClick={generatePDF} type="button">
-          Gerar orçamento em PDF
-          <span className="icon"><FaFilePdf /></span>
-        </button>
+        <div className="pdf-actions">
+          <button className="button generate-pdf" onClick={generatePDF} type="button">
+            Gerar PDF atual
+            <span className="icon"><FaFilePdf /></span>
+          </button>
+          <button className="button generate-modern-pdf" onClick={generateModernPDF} type="button">
+            Gerar PDF moderno
+            <span className="icon"><FaFilePdf /></span>
+          </button>
+        </div>
       </main>
     </div>
   );

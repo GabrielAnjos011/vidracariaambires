@@ -482,16 +482,34 @@ tbody tr:last-child td {
   line-height: 1.35;
 }
 
-.generate-pdf {
-  justify-self: end;
+.pdf-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.generate-pdf,
+.generate-modern-pdf {
   min-height: 52px;
   padding: 14px 22px;
+}
+
+.generate-pdf {
   background: linear-gradient(120deg, #e43746, #f0525e);
   box-shadow: 0 8px 16px rgba(211, 48, 62, .2);
 }
 
 .generate-pdf:hover {
   background: linear-gradient(120deg, #cf2737, #e94553);
+}
+
+.generate-modern-pdf {
+  background: linear-gradient(120deg, #006e9d, #009ed5);
+  box-shadow: 0 8px 16px rgba(0, 123, 175, .22);
+}
+
+.generate-modern-pdf:hover {
+  background: linear-gradient(120deg, #005e88, #008bc0);
 }
 
 @media (max-width: 720px) {
@@ -571,6 +589,7 @@ tbody tr:last-child td {
 
   .item-form-actions,
   .box-confirm-edit,
+  .pdf-actions,
   .generate-pdf {
     width: 100%;
   }
@@ -581,8 +600,13 @@ tbody tr:last-child td {
 
   .item-form-actions .button,
   .box-confirm-edit .button,
+  .pdf-actions .button,
   .generate-pdf {
     width: 100%;
+  }
+
+  .pdf-actions {
+    flex-direction: column;
   }
 
   .table-wrapper {
