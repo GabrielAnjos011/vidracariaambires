@@ -14,10 +14,11 @@ const PDFGenerator = () => {
   });
   const [items, setItems] = useState([]);
   const [itemDescription, setItemDescription] = useState("");
-  const [itemQuantity, setItemQuantity] = useState();
+  const [itemQuantity, setItemQuantity] = useState("");
   const [itemColor, setItemColor] = useState("");
   const [observations, setObservations] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
+  const [includePaymentDetails, setIncludePaymentDetails] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
   const [editingIndex, setEditingIndex] = useState(-1);
 
@@ -187,7 +188,98 @@ const PDFGenerator = () => {
       const lineHeight = doc.getLineHeight() / doc.internal.scaleFactor;
       totalAmountY = startYFooter + observationLines.length * lineHeight + 8;
     }
+
+    const paymentCardHeight = 55;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (
+      includePaymentDetails &&
+      totalAmountY + 10 + paymentCardHeight > pageHeight - 20
+    ) {
+      doc.addPage();
+      totalAmountY = 20;
+    }
     doc.text(`Valor Total: ${totalAmount}`, 20, totalAmountY);
+
+    if (includePaymentDetails) {
+      const paymentCardX = 20;
+      const paymentCardY = totalAmountY + 10;
+      const paymentCardWidth = 170;
+      const paymentCardPadding = 6;
+
+      doc.setFillColor(247, 251, 253);
+      doc.setDrawColor(190, 220, 233);
+      doc.roundedRect(
+        paymentCardX,
+        paymentCardY,
+        paymentCardWidth,
+        paymentCardHeight,
+        2,
+        2,
+        "FD"
+      );
+      doc.setFillColor(0, 152, 219);
+      doc.roundedRect(
+        paymentCardX,
+        paymentCardY,
+        paymentCardWidth,
+        10,
+        2,
+        2,
+        "F"
+      );
+
+      doc.setTextColor(255);
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(10);
+      doc.text("FORMAS DE PAGAMENTO", paymentCardX + paymentCardPadding, paymentCardY + 6.5);
+
+      doc.setTextColor(0);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.text(
+        "Titular: Vidraçaria Ambires  |  CNPJ: 68.536.892/0001-83",
+        paymentCardX + paymentCardPadding,
+        paymentCardY + 17
+      );
+
+      doc.setTextColor(0, 102, 153);
+      doc.setFont("Montserrat", "bold");
+      doc.text(
+        "TRANSFERÊNCIA BANCÁRIA",
+        paymentCardX + paymentCardPadding,
+        paymentCardY + 26
+      );
+      doc.setTextColor(0);
+      doc.setFont("Montserrat", "normal");
+      doc.text(
+        "Banco: Cora Scfi 403  |  Agência: 0001  |  Conta: 7685143-6",
+        paymentCardX + paymentCardPadding,
+        paymentCardY + 32
+      );
+
+      doc.setDrawColor(190, 220, 233);
+      doc.line(
+        paymentCardX + paymentCardPadding,
+        paymentCardY + 37,
+        paymentCardX + paymentCardWidth - paymentCardPadding,
+        paymentCardY + 37
+      );
+      doc.setTextColor(0, 102, 153);
+      doc.setFont("Montserrat", "bold");
+      doc.text("PIX PARA TRANSFERÊNCIA", paymentCardX + paymentCardPadding, paymentCardY + 44);
+      doc.setTextColor(0);
+      doc.setFont("Montserrat", "normal");
+      doc.text("Chave Pix (CNPJ):", paymentCardX + paymentCardPadding, paymentCardY + 51);
+      const pixLabelWidth = doc.getTextWidth("Chave Pix (CNPJ):");
+      doc.setFont("Montserrat", "bold");
+      doc.setFontSize(11);
+      doc.text(
+        "68536892000183",
+        paymentCardX + paymentCardPadding + pixLabelWidth + 3,
+        paymentCardY + 51
+      );
+      doc.setFontSize(14);
+    }
 
     doc.save(`orcamento${currentDate}.pdf`);
   };
@@ -230,162 +322,241 @@ const PDFGenerator = () => {
   };
 
   return (
-    <div>
-      <nav className="navbar">
-        <h1>Vidraçaria Ambires</h1>
-      </nav>
-      <div className="container">
-        <h2>Data do Orçamento</h2>
-        <span className="sub-titile">
-          Se não colocar a data, como padrão é preenchido com a data de hoje!
-        </span>
-        <input type="date" value={date} onChange={handleDateChange} required />
-        <h2>Dados do Cliente</h2>
-        <div>
-          <label>Nome:</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Preencha o nome do cliente"
-            value={customerData.name}
-            onChange={handleCustomerDataChange}
-          />
+    <div className="app">
+      <header className="navbar">
+        <div className="header-content">
+          <div className="brand-mark" aria-hidden="true">VA</div>
+          <div>
+            <h1>Vidraçaria Ambires</h1>
+            <p>Gerador de orçamentos</p>
+          </div>
         </div>
-        <div>
-          <label>CNPJ ou CPF:</label>
-          <input
-            type="text"
-            name="cnpj"
-            maxLength={18}
-            value={formatCnpjCpf(customerData.cnpj)}
-            onChange={handleCustomerDataChange}
-            placeholder="Preencha o CNPJ ou CPF do cliente"
-          />
+      </header>
+
+      <main className="container">
+        <div className="page-intro">
+          <span className="eyebrow">Novo orçamento</span>
+          <h2>Monte uma proposta clara e profissional.</h2>
+          <p>Preencha os dados abaixo e gere o PDF quando estiver pronto.</p>
         </div>
-        <div>
-          <label>Telefone:</label>
-          <input
-            type="tel"
-            name="phone"
-            maxLength={15}
-            value={formatPhone(customerData.phone)}
-            onChange={handleCustomerDataChange}
-            placeholder="Preencha o telefone do cliente"
-          />
-        </div>
-        <h2>Itens do Orçamento</h2>
-        <div>
-          <textarea
-            className="textareaDescription"
-            placeholder="Descrição"
-            value={itemDescription}
-            onChange={handleItemNameChange}
-          ></textarea>
-          <input
-            type="number"
-            placeholder="Quantidade"
-            value={itemQuantity}
-            onChange={handleItemQuantityChange}
-          />
-          <input
-            type="text"
-            placeholder="Cor"
-            value={itemColor}
-            onChange={handleItemPriceChange}
-          />
-          {editingIndex === -1 ? (
-            <button className="button add" onClick={addItem}>
-              Adicionar Item
-              <span className="icon">
-                <FaPaperPlane />
-              </span>
-            </button>
-          ) : (
-            <div className="box-confirm-edit">
-              <button className="button save-edit" onClick={saveItem}>
-                Salvar
-                <span className="icon">
-                  <FaCheck />
-                </span>
-              </button>
-              <button className="button cancel-edit" onClick={cancelEdit}>
-                Cancelar
-                <span className="icon">
-                  <MdCancel />
-                </span>
-              </button>
+
+        <section className="form-card date-card">
+          <div className="section-heading">
+            <div>
+              <h2>Data do orçamento</h2>
+              <p>Escolha a data que aparecerá no documento.</p>
             </div>
-          )}
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th>Quantidade</th>
-              <th>Cor</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, index) => (
-              <tr key={index}>
-                <td>{item.description}</td>
-                <td>{item.quantity}</td>
-                <td>{item.color}</td>
-                <td>
-                  <div className="box-item-actions">
-                    <button
-                      className="button edit"
-                      onClick={() => editItem(index)}
-                    >
-                      Editar
-                      <span className="icon">
-                        <FaEdit />
-                      </span>
-                    </button>
-                    <button
-                      className="button delete"
-                      onClick={() => deleteItem(index)}
-                    >
-                      Excluir
-                      <span className="icon">
-                        <FaTrash />
-                      </span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="box-footer">
-          <div className="box-footer-observation">
-            <h2>Observações</h2>
-            <textarea
-              className="textareaFooterObservation"
-              value={observations}
-              onChange={handleObservationsChange}
-              placeholder="Preencha as observações do orçamento"
-            />
           </div>
-          <div className="box-footer-totalAmount">
-            <h2>Valor Total do Orçamento</h2>
+          <label className="field date-field" htmlFor="budget-date">
+            <span>Data</span>
             <input
-              className="input-totalAmount"
-              type="text"
-              value={totalAmount}
-              onChange={handleTotalAmountChange}
-              placeholder="Preencha o valor do orçamento"
+              id="budget-date"
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              required
             />
+          </label>
+        </section>
+
+        <section className="form-card">
+          <div className="section-heading">
+            <div>
+              <h2>Dados do cliente</h2>
+              <p>Essas informações serão exibidas no orçamento.</p>
+            </div>
           </div>
-        </div>
-        <button className="button generate-pdf" onClick={generatePDF}>
-          Gerar PDF
-          <span className="icon">
-            <FaFilePdf />
-          </span>
+          <div className="form-grid">
+            <label className="field field-wide" htmlFor="customer-name">
+              <span>Nome</span>
+              <input
+                id="customer-name"
+                type="text"
+                name="name"
+                placeholder="Nome do cliente"
+                value={customerData.name}
+                onChange={handleCustomerDataChange}
+              />
+            </label>
+            <label className="field" htmlFor="customer-document">
+              <span>CNPJ ou CPF</span>
+              <input
+                id="customer-document"
+                type="text"
+                name="cnpj"
+                maxLength={18}
+                value={formatCnpjCpf(customerData.cnpj)}
+                onChange={handleCustomerDataChange}
+                placeholder="00.000.000/0000-00"
+              />
+            </label>
+            <label className="field" htmlFor="customer-phone">
+              <span>Telefone</span>
+              <input
+                id="customer-phone"
+                type="tel"
+                name="phone"
+                maxLength={15}
+                value={formatPhone(customerData.phone)}
+                onChange={handleCustomerDataChange}
+                placeholder="(00) 00000-0000"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="form-card">
+          <div className="section-heading section-heading-inline">
+            <div>
+              <h2>Itens do orçamento</h2>
+              <p>Adicione os produtos ou serviços que serão cobrados.</p>
+            </div>
+            <span className="item-counter">{items.length} {items.length === 1 ? "item" : "itens"}</span>
+          </div>
+          <div className="item-form-grid">
+            <label className="field field-description" htmlFor="item-description">
+              <span>Descrição</span>
+              <textarea
+                id="item-description"
+                className="textareaDescription"
+                placeholder="Descreva o item ou serviço"
+                value={itemDescription}
+                onChange={handleItemNameChange}
+              />
+            </label>
+            <label className="field" htmlFor="item-quantity">
+              <span>Quantidade</span>
+              <input
+                id="item-quantity"
+                type="number"
+                min="1"
+                placeholder="0"
+                value={itemQuantity}
+                onChange={handleItemQuantityChange}
+              />
+            </label>
+            <label className="field" htmlFor="item-color">
+              <span>Cor</span>
+              <input
+                id="item-color"
+                type="text"
+                placeholder="Ex.: Fumê"
+                value={itemColor}
+                onChange={handleItemPriceChange}
+              />
+            </label>
+          </div>
+          <div className="item-form-actions">
+            {editingIndex === -1 ? (
+              <button className="button add" onClick={addItem} type="button">
+                Adicionar item
+                <span className="icon"><FaPaperPlane /></span>
+              </button>
+            ) : (
+              <div className="box-confirm-edit">
+                <button className="button save-edit" onClick={saveItem} type="button">
+                  Salvar alterações
+                  <span className="icon"><FaCheck /></span>
+                </button>
+                <button className="button cancel-edit" onClick={cancelEdit} type="button">
+                  Cancelar
+                  <span className="icon"><MdCancel /></span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Quantidade</th>
+                  <th>Cor</th>
+                  <th aria-label="Ações">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td className="empty-state" colSpan="4">Nenhum item adicionado ainda.</td>
+                  </tr>
+                ) : (
+                  items.map((item, index) => (
+                    <tr key={index}>
+                      <td data-label="Descrição">{item.description}</td>
+                      <td data-label="Quantidade">{item.quantity}</td>
+                      <td data-label="Cor">{item.color}</td>
+                      <td data-label="Ações">
+                        <div className="box-item-actions">
+                          <button className="button edit" onClick={() => editItem(index)} type="button">
+                            Editar <span className="icon"><FaEdit /></span>
+                          </button>
+                          <button className="button delete" onClick={() => deleteItem(index)} type="button">
+                            Excluir <span className="icon"><FaTrash /></span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="form-card summary-card">
+          <div className="section-heading">
+            <div>
+              <h2>Finalização</h2>
+              <p>Inclua observações, valor e as formas de pagamento.</p>
+            </div>
+          </div>
+          <div className="summary-grid">
+            <label className="field" htmlFor="observations">
+              <span>Observações</span>
+              <textarea
+                id="observations"
+                className="textareaFooterObservation"
+                value={observations}
+                onChange={handleObservationsChange}
+                placeholder="Condições, prazos ou detalhes importantes"
+              />
+            </label>
+            <div className="amount-column">
+              <label className="field" htmlFor="total-amount">
+                <span>Valor total do orçamento</span>
+                <input
+                  id="total-amount"
+                  className="input-totalAmount"
+                  type="text"
+                  value={totalAmount}
+                  onChange={handleTotalAmountChange}
+                  placeholder="R$ 0,00"
+                />
+              </label>
+              <label className="payment-details-option">
+                <input
+                  className="payment-details-checkbox"
+                  type="checkbox"
+                  checked={includePaymentDetails}
+                  onChange={(e) => setIncludePaymentDetails(e.target.checked)}
+                />
+                <span className="payment-details-switch" aria-hidden="true" />
+                <span className="payment-details-option-content">
+                  <span className="payment-details-option-title">Incluir formas de pagamento</span>
+                  <span className="payment-details-option-description">Exibe dados bancários e Pix no PDF.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <button className="button generate-pdf" onClick={generatePDF} type="button">
+          Gerar orçamento em PDF
+          <span className="icon"><FaFilePdf /></span>
         </button>
-      </div>
+      </main>
     </div>
   );
 };
