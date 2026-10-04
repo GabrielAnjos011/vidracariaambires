@@ -113,6 +113,10 @@ textarea {
   gap: 28px;
 }
 
+.date-card > * {
+  min-width: 0;
+}
+
 .section-heading {
   margin-bottom: 22px;
 }
@@ -213,6 +217,27 @@ textarea {
 .date-field input {
   color: #007daf;
   font-weight: 700;
+}
+
+.date-field {
+  width: 100%;
+  max-width: 100%;
+}
+
+.date-field input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+}
+
+.date-field input[type="date"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+
+.date-field input[type="date"]::-webkit-calendar-picker-indicator {
+  margin: 0;
 }
 
 .item-form-grid {
